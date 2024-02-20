@@ -1,98 +1,105 @@
+import math
+
 import pygame
-import pygame.camera
-from pygame.locals import *
-import cv2
-#import os
 
 pygame.init()
-pygame.camera.init()
-cascadePath = 'haarcascade_frontalface_default.xml'
+WIDTH = 390
+HEIGHT = 220
+BORDER_COLOR = (30, 30, 30)
+BALL_COLOR = (128, 65, 89)
+BACKGROUND_COLOR = (255, 130, 150)
+RED_COLOR = (180, 60, 60)
+FIELD_COLOR = (10, 120, 80)
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
-faceCascade = cv2.CascadeClassifier(cascadePath)
+class Stick:
+    def __init__(self, x, y):
+        self.angle = 0
+        self._x = x
+        self._y = y
+        self.radius = 40
+    def update(self, mousepos):
+        x = self.radius * math.cos(math.radians(self.angle)) + self._x
+        y = self.radius * math.sin(math.radians(self.angle)) + self._y
+        #print(x, y, self.angle)
+        pygame.draw.line(screen, BORDER_COLOR, (self._x, self._y),
+                         end_pos=(x, y), width=5)
+        if stick.angle < 0:
+            stick.angle = 360
+        if self.angle > 360:
+            stick.angle = 0
 
-cap = cv2.VideoCapture(0)
-
+def calculatex_y():
+    x = stick.radius * math.cos(math.radians(stick.angle)) + stick._x
+    y = stick.radius * math.sin(math.radians(stick.angle)) + stick._y
+    xdir = 0
+    ydir = 0
+    if x < xspawn: xdir = 1
+    else: xdir = -1
+    if y < yspawn: ydir = 1
+    else: ydir = -1
+    alpha = (math.atan((y * ydir) / (x * xdir)) * 180) / math.pi
+    beta = 90 - alpha
+    m = alpha / beta
+    m1 = beta / alpha
+    print(alpha, beta, m, m1)
+    return m * xdir, m1 * ydir
 class Ball:
-    RADIUS = 10
-    speed = 200
-    DISTANTION_COLLIDER = 5
+    def __init__(self, x, y):
+        self._x = x
+        self._y = y
+        pygame.draw.circle(screen, BALL_COLOR, (self._x, self._y), radius=6)
+        self.dirx = 0.1
+        self.diry = 0.1
+    def change_dir(self, dirxx, diryy):
+        self.dirx = dirxx * 0.1
+        self.diry = diryy * 0.1
+    def move(self):
+        self._x += self.dirx
+        self._y += self.diry
+        if self._x >= WIDTH or self._x < 0:
+            self.dirx *= -1
+        if self._y >= HEIGHT or self._y < 0:
+            self.diry *= -1
 
-    def __init__(self, coords: tuple[int, int]):
-        self._x, self._y = coords
-        self.x_val = -1
-        self.y_val = -1
+        pygame.draw.circle(screen, BALL_COLOR, (self._x, self._y), radius=6)
 
-    def go(self):
-        self._x += self.speed / FPS * self.x_val
-        self._y += self.speed / FPS * self.y_val
-        if (self._x - self.RADIUS) < 3 or (self._x + self.RADIUS) > WIDTH - 3:
-            self.x_val *= -1
-        elif (self._y - self.RADIUS) < 3 or (self._y + self.RADIUS) > HEIGHT - 3:
-            self.y_val *= -1
-        # for i in balls:
-        #     if ((self._x - self.RADIUS > (i._x - i.RADIUS)) and (
-        #             self._x - self.RADIUS < (i._x - i.RADIUS) + self.DISTANTION_COLLIDER)) or (
-        #             (self._x + self.RADIUS > (i._x + i.RADIUS)) and (
-        #             self._x + self.RADIUS < (i._x + i.RADIUS) - self.DISTANTION_COLLIDER)):
-        #         self.x_val *= -1
-        #         i.x_val *= -1
-        #     elif ((self._y - self.RADIUS > (i._y - i.RADIUS)) and (
-        #             self._y - self.RADIUS < (i._y - i.RADIUS) + self.DISTANTION_COLLIDER)) or (
-        #             (self._y + self.RADIUS > (i._y + i.RADIUS)) and (
-        #             self._y + self.RADIUS < (i._y + i.RADIUS) - self.DISTANTION_COLLIDER)):
-        #         self.y_val *= -1
-        #         i.y_val *= -1
 
-    def test_of_cube(self, x_cube, y_cube, x2_cube, y2_cube):
-        if (self._x - self.RADIUS) < x_cube or (self._x + self.RADIUS) > x2_cube:
-            self.x_val *= -1
-        if (self._y - self.RADIUS) < y_cube or (self._y + self.RADIUS) > y2_cube:
-            self.y_val *= -1
+def draw_field(mousepos):
+    x = xspawn
+    y = yspawn
+    pygame.draw.circle(screen, BALL_COLOR, (x, y), radius=6)
 
-    def draw(self, screen: pygame.Surface):
-        pygame.draw.circle(screen, (255, 255, 255), (self._x, self._y), self.RADIUS)
-class Capture:
-    def __init__(self):
+xspawn = 126
+yspawn = 167
+centerX = WIDTH/2
+centerY = HEIGHT/2
+running = True
+ball_list = []
+screen.fill(BACKGROUND_COLOR)
+stick = Stick(xspawn, yspawn)
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            b = Ball(xspawn, yspawn)
 
-        self.sh = pygame.Surface(size, 0, screen)
-        self.coof = 10
-    def get_and_flip(self):
-        ret, frame = cap.read()
-        rgb = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
-        rgb = cv2.cvtColor(rgb, cv2.COLOR_BGR2RGB)
+            b.change_dir(calculatex_y()[0], calculatex_y()[1])
+            ball_list.append(b)
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]:
+            stick.angle -= 10
+        elif keys[pygame.K_RIGHT]:
+            stick.angle += 10
+    image = pygame.image.load('Screenshot 2024-02-20 182817.png')
+    screen.blit(image, (-30, -30))
+    if ball_list:
+        for i in ball_list:
+            i.move()
+    stick.update(pygame.mouse.get_pos())
+    draw_field(pygame.mouse.get_pos())
 
-        self.sh = pygame.surfarray.make_surface(rgb)
-        screen.blit(self.sh, (0, 0))
+    pygame.display.flip()
 
-        gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-        faces = faceCascade.detectMultiScale(gray, 2, 2)
-        for (x, y, w, h) in faces:
-            x = 640 - x
-            w = w - self.coof
-            for i in balls:
-                i.test_of_cube(x - w, y, x - w, y + w)
-            pygame.draw.polygon(screen, (255, 255, 255), ((x - w, y), (x - w, y + w), (x, y + w), (x, y)), 1)
-        pygame.display.flip()
-
-work = True
-if __name__ == '__main__':
-    balls: list[Ball] = []
-    BACKGROUND = pygame.color.Color(35, 35, 35)
-    FPS = 60
-    WIDTH, HEIGHT, size = 640, 480, (640, 480)
-    screen = pygame.display.set_mode(size, 0)
-    cm = Capture()
-
-    while work:
-        cm.get_and_flip()
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                work = False
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                balls.append(Ball(event.pos))
-        for i in balls:
-            i.go()
-            i.draw(screen)
-        pygame.display.flip()
 pygame.quit()
-quit()
