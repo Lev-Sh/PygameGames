@@ -1,2 +1,3 @@
-from math import pi, tanh, radians
-print(2 * 180 / pi)
+import math
+
+print(abs(-5))
