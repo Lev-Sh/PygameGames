@@ -10,6 +10,7 @@ BALL_COLOR = (128, 65, 89)
 BACKGROUND_COLOR = (255, 130, 150)
 RED_COLOR = (180, 60, 60)
 FIELD_COLOR = (10, 120, 80)
+ROTATION_SPEED = 3
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
 
@@ -30,6 +31,10 @@ class Stick:
             stick.angle = 360
         if self.angle > 360:
             stick.angle = 0
+
+    def set_spawn(self, pos):
+        self.x, self.y = pos
+
 
 
 def calculatex_y():
@@ -71,7 +76,6 @@ class Ball:
             self.dirx *= -1
         if self._y >= HEIGHT or self._y < 0:
             self.diry *= -1
-
         pygame.draw.circle(screen, BALL_COLOR, (self._x, self._y), radius=6)
 
 
@@ -95,15 +99,15 @@ while running:
             running = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
             b = Ball(xspawn, yspawn)
-
             b.change_dir(calculatex_y()[0], calculatex_y()[1])
             ball_list.append(b)
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
-            stick.angle -= 3
+            stick.angle -= ROTATION_SPEED
         elif keys[pygame.K_RIGHT]:
-            stick.angle += 3
+            stick.angle += ROTATION_SPEED
         elif keys[pygame.K_r]:
+            stick.set_spawn(pygame.mouse.get_pos())
             xspawn, yspawn = pygame.mouse.get_pos()
     image = pygame.image.load('Screenshot 2024-02-20 182817.png')
     screen.blit(image, (-30, -30))
